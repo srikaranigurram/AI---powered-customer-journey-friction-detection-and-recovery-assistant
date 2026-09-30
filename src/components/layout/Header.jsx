@@ -1,15 +1,13 @@
 import React from 'react';
 import { useDashboard } from '../../context/DashboardContext';
 import {
-  Activity,
   Sparkles,
   RefreshCw,
   Search,
-  Bell,
   Database,
   Cpu,
-  Layers,
-  Zap
+  Zap,
+  Tag
 } from 'lucide-react';
 
 export default function Header() {
@@ -20,8 +18,6 @@ export default function Header() {
     setSearchQuery,
     useMockData,
     handleToggleApiMode,
-    apiBaseUrl,
-    activeTab,
     setActiveTab,
     filteredCustomers
   } = useDashboard();
@@ -36,10 +32,6 @@ export default function Header() {
             <div className="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center">
               <Sparkles className="w-6 h-6 text-indigo-400 animate-pulse" />
             </div>
-            <div className="absolute -top-1 -right-1 flex h-3 w-3">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-3 w-3 bg-cyan-500 border border-slate-900"></span>
-            </div>
           </div>
 
           <div>
@@ -47,8 +39,14 @@ export default function Header() {
               <h1 className="text-xl lg:text-2xl font-black tracking-tight text-white font-sans flex items-center gap-2">
                 Journey<span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-300 to-cyan-400">AI</span>
               </h1>
-              <span className="px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest bg-indigo-500/15 text-indigo-300 border border-indigo-500/30 rounded-full">
-                v2.4 Live
+              
+              {/* Subtle professional Demo/Mock indicator */}
+              <span
+                className="px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-amber-500/10 text-amber-300 border border-amber-500/30 rounded-full flex items-center gap-1.5"
+                title="Application currently running on synthetic mock data for demonstration"
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                Demo Data
               </span>
             </div>
             <p className="text-xs text-slate-400 font-medium">
@@ -86,7 +84,7 @@ export default function Header() {
                   ? 'bg-indigo-600 text-white shadow-sm'
                   : 'text-slate-400 hover:text-slate-200'
               }`}
-              title="Using realistic mock dataset for hackathon frontend demonstration"
+              title="Using synthetic demo dataset for hackathon frontend demonstration"
             >
               <Database className="w-3.5 h-3.5" />
               Mock API
@@ -116,7 +114,7 @@ export default function Header() {
             <span className="hidden sm:inline">Sync</span>
           </button>
 
-          {/* Quick AI Trigger Demo */}
+          {/* Quick Recovery Hub Shortcut */}
           <button
             onClick={() => setActiveTab('recovery')}
             className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 rounded-lg shadow-glow-indigo transition-all transform active:scale-95"

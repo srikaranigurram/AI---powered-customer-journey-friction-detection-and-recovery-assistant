@@ -1,8 +1,20 @@
 import React from 'react';
-import { AlertOctagon, CheckCircle, ShieldAlert, Cpu, Activity, Zap } from 'lucide-react';
+import { AlertOctagon, Activity } from 'lucide-react';
 
 export default function FrictionEvidenceCard({ evidence = {}, frictionType = '', frictionStage = '' }) {
-  const factors = evidence.factors || [];
+  // Support Person 1 ML output: evidence as Array of strings OR object
+  let factors = [];
+  let primaryFactor = frictionType;
+  let impactScore = 'High Friction Signal';
+
+  if (Array.isArray(evidence)) {
+    factors = evidence;
+    primaryFactor = evidence[0] || frictionType;
+  } else if (evidence && typeof evidence === 'object') {
+    factors = evidence.factors || [];
+    primaryFactor = evidence.primaryFactor || evidence.primary_factor || frictionType;
+    impactScore = evidence.impactScore || evidence.impact_score || 'High Friction Signal';
+  }
 
   return (
     <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 backdrop-blur-md space-y-3">
@@ -22,12 +34,12 @@ export default function FrictionEvidenceCard({ evidence = {}, frictionType = '',
           Primary Friction Factor
         </div>
         <div className="text-xs font-semibold text-white">
-          {evidence.primaryFactor || frictionType}
+          {primaryFactor}
         </div>
-        {evidence.impactScore && (
+        {impactScore && (
           <div className="mt-2 text-xs text-rose-400 font-medium flex items-center gap-1.5">
             <Activity className="w-3.5 h-3.5 text-rose-500" />
-            <span>Impact: {evidence.impactScore}</span>
+            <span>Impact: {impactScore}</span>
           </div>
         )}
       </div>

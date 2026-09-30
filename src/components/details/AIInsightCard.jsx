@@ -1,13 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-  Sparkles,
   Bot,
   Copy,
   Check,
   Zap,
   MessageSquare,
-  ShieldCheck,
-  Send,
   HelpCircle,
   Lightbulb
 } from 'lucide-react';
@@ -16,13 +13,24 @@ import { useDashboard } from '../../context/DashboardContext';
 export default function AIInsightCard({ aiInsight = {}, customerId = '', onTriggerRecovery = null }) {
   const { addToast } = useDashboard();
   const [copied, setCopied] = useState(false);
-  const [editableMessage, setEditableMessage] = useState(
-    aiInsight?.personalizedMessage || ''
-  );
+
+  // Field mapping supporting both snake_case (FastAPI/Gemini) and camelCase
+  const cause = aiInsight?.cause || aiInsight?.likely_cause || aiInsight?.likelyCause || 'Telemetry friction detected during checkout stage.';
+  const explanation = aiInsight?.explanation || 'Customer encountered friction before completing order confirmation.';
+  const recommendedRecovery = aiInsight?.recommended_recovery || aiInsight?.recommendedRecovery || 'Trigger 1-Click Alternate Payment link.';
+  const initialMessage = aiInsight?.personalized_message || aiInsight?.personalizedMessage || 'We saved your cart! Click here to complete your order in 1 tap.';
+  const confidenceScore = aiInsight?.confidence_score ?? aiInsight?.confidenceScore ?? 96;
+  const modelName = aiInsight?.model || 'Gemini 1.5 Pro (Simulated)';
+
+  const [editableMessage, setEditableMessage] = useState(initialMessage);
   const [isEditing, setIsEditing] = useState(false);
 
+  useEffect(() => {
+    setEditableMessage(initialMessage);
+  }, [initialMessage]);
+
   const handleCopyMessage = () => {
-    navigator.clipboard.writeText(editableMessage || aiInsight?.personalizedMessage || '');
+    navigator.clipboard.writeText(editableMessage || initialMessage);
     setCopied(true);
     addToast('Copied to Clipboard', 'Personalized recovery message copied!', 'info');
     setTimeout(() => setCopied(false), 2500);
@@ -45,22 +53,22 @@ export default function AIInsightCard({ aiInsight = {}, customerId = '', onTrigg
                 Gemini AI Friction Diagnostic
               </h3>
               <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-                {aiInsight?.model || 'Gemini 1.5 Pro'}
+                {modelName}
               </span>
             </div>
             <p className="text-[11px] text-slate-400">
-              Generative root-cause analysis & automated intervention
+              Generative root-cause analysis & personalized customer message
             </p>
           </div>
         </div>
 
-        {aiInsight?.confidenceScore && (
+        {confidenceScore !== null && (
           <div className="text-right">
             <div className="text-[10px] uppercase font-bold text-slate-400">
               AI Confidence
             </div>
             <div className="text-sm font-mono font-black text-emerald-400">
-              {aiInsight.confidenceScore}%
+              {confidenceScore}%
             </div>
           </div>
         )}
@@ -68,14 +76,14 @@ export default function AIInsightCard({ aiInsight = {}, customerId = '', onTrigg
 
       <div className="space-y-4 text-xs">
         
-        {/* 1. Likely Cause */}
+        {/* 1. Likely Cause (Gemini Output Mapping) */}
         <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800">
           <div className="flex items-center gap-1.5 font-bold text-indigo-300 uppercase tracking-wider text-[11px] mb-1">
             <HelpCircle className="w-3.5 h-3.5 text-indigo-400" />
             <span>Likely Cause</span>
           </div>
           <p className="text-slate-200 leading-relaxed font-medium">
-            {aiInsight?.likelyCause || 'Analyzing customer behavioral patterns...'}
+            {cause}
           </p>
         </div>
 
@@ -86,7 +94,7 @@ export default function AIInsightCard({ aiInsight = {}, customerId = '', onTrigg
             <span>AI Reasoning & Explanation</span>
           </div>
           <p className="text-slate-300 leading-relaxed">
-            {aiInsight?.explanation || 'Root cause evaluation in progress...'}
+            {explanation}
           </p>
         </div>
 
@@ -97,7 +105,7 @@ export default function AIInsightCard({ aiInsight = {}, customerId = '', onTrigg
             <span>Recommended Recovery Strategy</span>
           </div>
           <p className="text-slate-200 leading-relaxed font-semibold">
-            {aiInsight?.recommendedRecovery || 'Automated coupon or 1-click payment dispatch'}
+            {recommendedRecovery}
           </p>
         </div>
 
@@ -136,7 +144,7 @@ export default function AIInsightCard({ aiInsight = {}, customerId = '', onTrigg
             />
           ) : (
             <div className="p-2.5 rounded-lg bg-slate-900/80 border border-slate-800/80 text-xs text-slate-200 italic leading-relaxed">
-              "{editableMessage || aiInsight?.personalizedMessage}"
+              "{editableMessage}"
             </div>
           )}
 

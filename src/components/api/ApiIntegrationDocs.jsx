@@ -2,14 +2,10 @@ import React, { useState } from 'react';
 import { useDashboard } from '../../context/DashboardContext';
 import {
   Code2,
-  Cpu,
-  Database,
-  CheckCircle2,
   Copy,
   Check,
   Server,
-  Terminal,
-  Zap,
+  Layers,
   Bot
 } from 'lucide-react';
 
@@ -22,15 +18,20 @@ export default function ApiIntegrationDocs() {
     {
       method: 'GET',
       path: '/api/customers',
-      description: 'Fetch all active customers with risk scores and detected friction tags',
+      description: 'Fetch all evaluated customers (Person 1 ML Output schema mapped)',
       responseExample: `[
   {
-    "id": "CUST-8492",
+    "customer_id": "CUST-8492",
     "name": "Alex Rivera",
-    "riskScore": 94,
-    "riskLevel": "HIGH",
-    "frictionType": "Payment Gateway Failure",
-    "cartValue": 349.99,
+    "risk_score": 94,
+    "risk_level": "HIGH",
+    "friction_type": "Payment Gateway Failure",
+    "evidence": [
+      "3DS authentication timeout",
+      "Payment retry detected",
+      "Checkout abandonment"
+    ],
+    "cart_value": 349.99,
     "status": "Pending Recovery"
   }
 ]`
@@ -38,59 +39,86 @@ export default function ApiIntegrationDocs() {
     {
       method: 'GET',
       path: '/api/customers/{customerId}',
-      description: 'Fetch complete customer details, 6-step journey timeline, and evidence signals',
+      description: 'Fetch complete customer profile, 6-step journey timeline, and friction factors',
       responseExample: `{
-  "id": "CUST-8492",
+  "customer_id": "CUST-8492",
   "name": "Alex Rivera",
-  "riskScore": 94,
+  "risk_score": 94,
+  "risk_level": "HIGH",
+  "friction_type": "Payment Gateway Failure",
+  "cart_value": 349.99,
+  "evidence": [
+    "3DS authentication timeout",
+    "Payment retry detected"
+  ],
   "journey": [
     { "step": "Product View", "status": "completed", "duration": "3m 12s" },
-    { "step": "Payment", "status": "friction", "details": "3DS pop-up failed" }
-  ],
-  "evidence": { "primaryFactor": "3DS Auth Timeout" }
+    { "step": "Comparison", "status": "completed", "duration": "4m 45s" },
+    { "step": "Add to Cart", "status": "completed", "duration": "45s" },
+    { "step": "Checkout", "status": "completed", "duration": "1m 10s" },
+    { "step": "Payment", "status": "friction", "duration": "7m 05s" },
+    { "step": "Order/Abandonment", "status": "abandoned", "duration": "Now" }
+  ]
 }`
     },
     {
       method: 'GET',
       path: '/api/analytics/risk',
-      description: 'Dashboard aggregated metrics: total, high-risk, frictions, distribution',
+      description: 'Dashboard summary metrics: total, high-risk, frictions, and distribution',
       responseExample: `{
   "totalCustomers": 1248,
   "highRiskCustomers": 142,
   "frictionsDetected": 189,
   "recoverableCustomers": 118,
   "riskDistribution": [
-    { "name": "High Risk", "count": 142, "color": "#EF4444" }
+    { "name": "High Risk", "count": 142, "color": "#EF4444" },
+    { "name": "Medium Risk", "count": 286, "color": "#F59E0B" },
+    { "name": "Low Risk", "count": 820, "color": "#10B981" }
   ]
 }`
     },
     {
       method: 'GET',
-      path: '/api/ai/insight/{customerId}',
-      description: 'Gemini Generative diagnostics: root cause, reasoning, and personalized message',
+      path: '/api/analytics/friction',
+      description: 'Friction classification breakdown & funnel drop-offs',
       responseExample: `{
-  "likelyCause": "3D-Secure iframe timeout on iOS Safari",
-  "explanation": "High buyer intent dropped strictly due to gateway tokenization error.",
-  "recommendedRecovery": "1-Click Apple Pay Link via WhatsApp",
-  "personalizedMessage": "Hi Alex, we noticed a bank verification issue...",
-  "confidenceScore": 98,
-  "model": "Gemini 1.5 Pro"
+  "frictionTypes": [
+    { "type": "Payment Gateway Failure", "count": 68, "color": "#EF4444" },
+    { "type": "Shipping Cost Shock", "count": 47, "color": "#F97316" },
+    { "type": "Promo Code Invalid Error", "count": 35, "color": "#F59E0B" }
+  ]
+}`
+    },
+    {
+      method: 'GET',
+      path: '/api/ai-insight/{customerId}',
+      description: 'Gemini diagnostics: cause, reasoning, recommended recovery, and personalized copy',
+      responseExample: `{
+  "customer_id": "CUST-8492",
+  "cause": "Payment processing issue",
+  "explanation": "The customer experienced repeated payment failures before abandoning checkout.",
+  "recommended_recovery": "Offer an alternate payment method.",
+  "personalized_message": "Your previous payment was not completed. You can retry using another payment method."
 }`
     },
     {
       method: 'POST',
-      path: '/api/recovery/trigger',
-      description: 'Trigger automated recovery action sequence (WhatsApp, SMS, Email)',
+      path: '/api/recovery/{customerId}',
+      description: 'Trigger automated recovery action (WhatsApp, SMS, Email, Incentive)',
       requestExample: `{
-  "customerId": "CUST-8492",
   "channel": "WhatsApp",
   "strategy": "1-Click Alternative Payment Link",
-  "discountOffer": "Free Express Shipping"
+  "discountOffer": "Free Express Shipping",
+  "message": "Hi Alex, complete your order with 1-click Apple Pay..."
 }`,
       responseExample: `{
   "success": true,
   "message": "Recovery action triggered successfully.",
-  "data": { "logId": "REC-901", "status": "Delivered" }
+  "data": {
+    "status": "Delivered",
+    "channel": "WhatsApp",
+    "deliveredAt": "10:35 AM"
+  }
 }`
     }
   ];
@@ -105,7 +133,7 @@ export default function ApiIntegrationDocs() {
   return (
     <div className="space-y-6">
       
-      {/* Handover Banner */}
+      {/* Handover Architecture Banner */}
       <div className="p-6 rounded-2xl bg-gradient-to-r from-indigo-950/60 via-slate-900/90 to-purple-950/60 border border-indigo-500/30 backdrop-blur-md">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-1">
@@ -114,12 +142,11 @@ export default function ApiIntegrationDocs() {
                 Person 4 Handover Spec
               </span>
               <h2 className="text-lg font-bold text-white">
-                FastAPI & Gemini Integration Architecture
+                FastAPI, ML & Gemini Integration Contract
               </h2>
             </div>
             <p className="text-xs text-slate-300 max-w-2xl leading-relaxed">
-              The JourneyAI React frontend is architected with a decoupled service layer (<code className="text-indigo-300">src/services/api.js</code>).
-              Once your teammates run the FastAPI backend, switch the toggle below or update <code className="text-indigo-300">.env</code> to connect live.
+              The JourneyAI React frontend is ready to consume your FastAPI endpoints. The service layer (<code className="text-indigo-300">src/services/api.js</code>) includes automatic schema normalizers for Person 1's ML model and Person 3's Gemini prompts.
             </p>
           </div>
 
@@ -153,8 +180,14 @@ export default function ApiIntegrationDocs() {
           </div>
         </div>
 
+        {/* Security & Flow Note */}
+        <div className="mt-4 pt-4 border-t border-slate-800/80 flex items-center gap-2 text-xs text-slate-300 font-mono">
+          <Bot className="w-4 h-4 text-indigo-400" />
+          <span>Architecture: React Frontend ➔ FastAPI Backend ➔ Gemini / ML (No API keys in client)</span>
+        </div>
+
         {/* Custom Base URL Input */}
-        <div className="mt-4 pt-4 border-t border-slate-800 flex flex-wrap items-center gap-3">
+        <div className="mt-3 pt-3 border-t border-slate-800 flex flex-wrap items-center gap-3">
           <span className="text-xs text-slate-400 font-mono">FastAPI Base URL:</span>
           <input
             type="text"
@@ -204,10 +237,22 @@ export default function ApiIntegrationDocs() {
                 </span>
               </div>
 
+              {/* Request Spec if applicable */}
+              {ep.requestExample && (
+                <div className="relative rounded-xl bg-slate-950 p-3.5 border border-slate-800/80">
+                  <div className="flex items-center justify-between text-[11px] font-mono text-slate-500 mb-1.5">
+                    <span>Request Body (JSON)</span>
+                  </div>
+                  <pre className="text-xs font-mono text-slate-300 overflow-x-auto">
+                    <code>{ep.requestExample}</code>
+                  </pre>
+                </div>
+              )}
+
               {/* Response Spec */}
               <div className="relative rounded-xl bg-slate-950 p-3.5 border border-slate-800/80">
                 <div className="flex items-center justify-between text-[11px] font-mono text-slate-500 mb-1.5">
-                  <span>Expected JSON Payload</span>
+                  <span>Expected JSON Response</span>
                   <button
                     onClick={() => handleCopy(ep.responseExample, idx)}
                     className="flex items-center gap-1 text-indigo-400 hover:text-indigo-300"

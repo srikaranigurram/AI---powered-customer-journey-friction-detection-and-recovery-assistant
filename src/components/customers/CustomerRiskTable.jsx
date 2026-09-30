@@ -6,11 +6,6 @@ import {
   Zap,
   CheckCircle2,
   AlertCircle,
-  ExternalLink,
-  Smartphone,
-  Laptop,
-  ArrowUpDown,
-  ShoppingBag,
   Sparkles
 } from 'lucide-react';
 
@@ -50,13 +45,31 @@ export default function CustomerRiskTable() {
           </thead>
           <tbody className="divide-y divide-slate-800/60 text-xs">
             {filteredCustomers.map((customer) => {
-              const isTriggered = customer.status === 'Triggered' || customer.status === 'Delivered';
-              const isConverted = customer.status === 'Converted';
-              const isHigh = customer.riskLevel === 'HIGH';
+              const custId = customer.id || customer.customer_id;
+              const riskScore = customer.riskScore !== undefined ? customer.riskScore : (customer.risk_score !== undefined ? customer.risk_score : 50);
+              const riskLevel = (customer.riskLevel || customer.risk_level || 'LOW').toUpperCase();
+              const frictionType = customer.frictionType || customer.friction_type || 'None';
+              const cartValue = Number(customer.cartValue !== undefined ? customer.cartValue : (customer.cart_value !== undefined ? customer.cart_value : 0));
+              const status = customer.status || 'Pending';
+
+              // Evidence formatting
+              let evidenceSummary = 'Standard session velocity';
+              let signalCount = 0;
+              if (Array.isArray(customer.evidence)) {
+                evidenceSummary = customer.evidence.join(' • ');
+                signalCount = customer.evidence.length;
+              } else if (customer.evidence && typeof customer.evidence === 'object') {
+                evidenceSummary = customer.evidence.primaryFactor || customer.evidence.primary_factor || 'Standard session velocity';
+                signalCount = customer.evidence.factors?.length || 0;
+              }
+
+              const isTriggered = status === 'Triggered' || status === 'Delivered';
+              const isConverted = status === 'Converted';
+              const isHigh = riskLevel === 'HIGH';
 
               return (
                 <tr
-                  key={customer.id}
+                  key={custId}
                   className={`hover:bg-slate-800/40 transition-colors group ${
                     isHigh ? 'bg-rose-500/[0.02]' : ''
                   }`}
@@ -66,7 +79,7 @@ export default function CustomerRiskTable() {
                     <div className="flex items-center gap-3">
                       <div className="relative shrink-0">
                         <img
-                          src={customer.avatar}
+                          src={customer.avatar || `https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80`}
                           alt={customer.name}
                           className="w-10 h-10 rounded-full object-cover border border-slate-700/80"
                         />
@@ -81,15 +94,15 @@ export default function CustomerRiskTable() {
                         <div className="font-bold text-white text-xs flex items-center gap-2 group-hover:text-indigo-300 transition-colors">
                           <span>{customer.name}</span>
                           <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-slate-800 text-slate-400 border border-slate-700">
-                            {customer.id}
+                            {custId}
                           </span>
                         </div>
                         <div className="flex items-center gap-2 text-[11px] text-slate-400 mt-0.5">
                           <span className="text-slate-300 font-semibold font-mono">
-                            ${customer.cartValue.toFixed(2)}
+                            ${cartValue.toFixed(2)}
                           </span>
                           <span>•</span>
-                          <span className="truncate max-w-[130px]">{customer.device}</span>
+                          <span className="truncate max-w-[130px]">{customer.device || 'Web Session'}</span>
                         </div>
                       </div>
                     </div>
@@ -101,29 +114,29 @@ export default function CustomerRiskTable() {
                       <div className="flex items-center justify-between text-xs mb-1 font-mono font-bold">
                         <span
                           className={
-                            customer.riskScore > 75
+                            riskScore > 75
                               ? 'text-rose-400'
-                              : customer.riskScore > 45
+                              : riskScore > 45
                               ? 'text-amber-400'
                               : 'text-emerald-400'
                           }
                         >
-                          {customer.riskScore}%
+                          {riskScore}%
                         </span>
                         <span className="text-[10px] text-slate-500 font-normal">
-                          {customer.riskScore > 75 ? 'Critical' : customer.riskScore > 45 ? 'Moderate' : 'Safe'}
+                          {riskScore > 75 ? 'Critical' : riskScore > 45 ? 'Moderate' : 'Safe'}
                         </span>
                       </div>
                       <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
                         <div
                           className={`h-full rounded-full ${
-                            customer.riskScore > 75
+                            riskScore > 75
                               ? 'bg-rose-500 shadow-glow-rose'
-                              : customer.riskScore > 45
+                              : riskScore > 45
                               ? 'bg-amber-500'
                               : 'bg-emerald-500'
                           }`}
-                          style={{ width: `${customer.riskScore}%` }}
+                          style={{ width: `${riskScore}%` }}
                         />
                       </div>
                     </div>
@@ -132,7 +145,7 @@ export default function CustomerRiskTable() {
                   {/* 3. Risk Level (HIGH / MEDIUM / LOW) */}
                   <td className="py-4 px-4">
                     <RiskBadge
-                      level={customer.riskLevel}
+                      level={riskLevel}
                       score={null}
                       size="sm"
                     />
@@ -142,10 +155,10 @@ export default function CustomerRiskTable() {
                   <td className="py-4 px-4">
                     <div className="flex flex-col gap-1">
                       <span className="font-semibold text-slate-200">
-                        {customer.frictionType}
+                        {frictionType}
                       </span>
                       <span className="inline-flex items-center text-[10px] text-slate-400">
-                        Stage: <strong className="text-indigo-400 ml-1">{customer.frictionStage}</strong>
+                        Stage: <strong className="text-indigo-400 ml-1">{customer.frictionStage || 'Checkout'}</strong>
                       </span>
                     </div>
                   </td>
@@ -153,11 +166,11 @@ export default function CustomerRiskTable() {
                   {/* 5. Evidence */}
                   <td className="py-4 px-4 max-w-xs">
                     <div className="text-[11px] text-slate-300 leading-relaxed line-clamp-2">
-                      {customer.evidence?.primaryFactor || 'Standard session velocity'}
+                      {evidenceSummary}
                     </div>
-                    {customer.evidence?.factors && customer.evidence.factors.length > 0 && (
+                    {signalCount > 0 && (
                       <div className="text-[10px] text-slate-500 mt-0.5">
-                        +{customer.evidence.factors.length} behavioral signals detected
+                        +{signalCount} telemetry signals detected
                       </div>
                     )}
                   </td>
@@ -167,7 +180,7 @@ export default function CustomerRiskTable() {
                     <div className="flex items-center justify-end gap-2">
                       {/* View Details button */}
                       <button
-                        onClick={() => openCustomerDetails(customer.id)}
+                        onClick={() => openCustomerDetails(custId)}
                         className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white font-medium text-xs border border-slate-700 transition-all hover:border-slate-600"
                         title="View Full Customer Journey & AI Insights"
                       >
@@ -177,7 +190,7 @@ export default function CustomerRiskTable() {
 
                       {/* Trigger Recovery Button */}
                       <button
-                        onClick={() => handleTriggerRecovery(customer.id)}
+                        onClick={() => handleTriggerRecovery(custId)}
                         disabled={triggeringRecovery || isTriggered || isConverted}
                         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold text-xs transition-all ${
                           isConverted
@@ -188,7 +201,7 @@ export default function CustomerRiskTable() {
                             ? 'bg-gradient-to-r from-rose-600 to-indigo-600 hover:from-rose-500 hover:to-indigo-500 text-white shadow-glow-rose active:scale-95'
                             : 'bg-indigo-600 hover:bg-indigo-500 text-white active:scale-95'
                         }`}
-                        title="Trigger AI Recovery Action"
+                        title="Trigger Recovery Action"
                       >
                         {isConverted ? (
                           <>
@@ -220,13 +233,13 @@ export default function CustomerRiskTable() {
       <div className="px-4 py-3 bg-slate-950/60 border-t border-slate-800 text-xs text-slate-400 flex flex-col sm:flex-row items-center justify-between gap-2">
         <div className="flex items-center gap-3">
           <span className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-rose-500"></span> High Risk: <strong>{filteredCustomers.filter(c => c.riskLevel === 'HIGH').length}</strong>
+            <span className="w-2 h-2 rounded-full bg-rose-500"></span> High Risk: <strong>{filteredCustomers.filter(c => (c.riskLevel || c.risk_level) === 'HIGH').length}</strong>
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-amber-500"></span> Medium: <strong>{filteredCustomers.filter(c => c.riskLevel === 'MEDIUM').length}</strong>
+            <span className="w-2 h-2 rounded-full bg-amber-500"></span> Medium: <strong>{filteredCustomers.filter(c => (c.riskLevel || c.risk_level) === 'MEDIUM').length}</strong>
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-emerald-500"></span> Low: <strong>{filteredCustomers.filter(c => c.riskLevel === 'LOW').length}</strong>
+            <span className="w-2 h-2 rounded-full bg-emerald-500"></span> Low: <strong>{filteredCustomers.filter(c => (c.riskLevel || c.risk_level) === 'LOW').length}</strong>
           </span>
         </div>
 

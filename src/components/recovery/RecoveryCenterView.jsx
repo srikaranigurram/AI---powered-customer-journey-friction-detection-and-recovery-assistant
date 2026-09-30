@@ -1,6 +1,5 @@
 import React from 'react';
 import { useDashboard } from '../../context/DashboardContext';
-import RecoveryActionCard from './RecoveryActionCard';
 import RiskBadge from '../customers/RiskBadge';
 import {
   Zap,
@@ -8,13 +7,10 @@ import {
   Clock,
   ShieldCheck,
   Send,
-  MessageSquare,
   Sparkles,
   TrendingUp,
-  DollarSign,
-  Layers,
-  ArrowRight,
-  Eye
+  Eye,
+  Info
 } from 'lucide-react';
 
 export default function RecoveryCenterView() {
@@ -30,7 +26,6 @@ export default function RecoveryCenterView() {
     c => c.riskLevel === 'HIGH' || c.status === 'Pending Recovery' || c.status === 'Pending'
   );
 
-  const convertedCount = customers.filter(c => c.status === 'Converted').length;
   const triggeredCount = customers.filter(c => c.status === 'Triggered' || c.status === 'Delivered').length;
 
   return (
@@ -38,6 +33,7 @@ export default function RecoveryCenterView() {
       
       {/* Top Recovery KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {/* 1. Pending Interventions */}
         <div className="p-5 rounded-2xl bg-gradient-to-b from-indigo-500/10 to-transparent border border-indigo-500/20 backdrop-blur-md">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
@@ -58,6 +54,7 @@ export default function RecoveryCenterView() {
           </p>
         </div>
 
+        {/* 2. Dispatched Sequences */}
         <div className="p-5 rounded-2xl bg-gradient-to-b from-purple-500/10 to-transparent border border-purple-500/20 backdrop-blur-md">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
@@ -78,23 +75,34 @@ export default function RecoveryCenterView() {
           </p>
         </div>
 
-        <div className="p-5 rounded-2xl bg-gradient-to-b from-emerald-500/10 to-transparent border border-emerald-500/20 backdrop-blur-md">
+        {/* 3. Estimated Recovered Revenue (Marked as Demo / Estimated with Info Tooltip) */}
+        <div className="p-5 rounded-2xl bg-gradient-to-b from-emerald-500/10 to-transparent border border-emerald-500/20 backdrop-blur-md relative group">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-              Recovered Revenue
-            </span>
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                Estimated Recovered Revenue
+              </span>
+              <div className="relative">
+                <Info
+                  className="w-3.5 h-3.5 text-slate-400 hover:text-slate-200 cursor-help transition-colors"
+                  title="Currently based on synthetic demo data. Will be populated from the backend after recovery actions are connected."
+                />
+              </div>
+            </div>
             <div className="p-2 rounded-xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
               <TrendingUp className="w-4 h-4" />
             </div>
           </div>
+
           <div className="mt-3 flex items-baseline gap-2">
             <span className="text-3xl font-black font-mono text-emerald-400">
               $1,306.55
             </span>
             <span className="text-xs text-emerald-400 font-semibold">+68.4% Win-rate</span>
           </div>
-          <p className="mt-2 text-xs text-slate-400">
-            Cart value recovered from AI-driven nudges
+
+          <p className="mt-2 text-[11px] text-slate-400 leading-tight">
+            Currently based on synthetic demo data. Will be populated from the backend after recovery actions are connected.
           </p>
         </div>
       </div>

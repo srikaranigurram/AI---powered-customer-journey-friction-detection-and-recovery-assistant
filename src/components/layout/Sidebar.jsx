@@ -3,17 +3,14 @@ import { useDashboard } from '../../context/DashboardContext';
 import {
   LayoutDashboard,
   Users,
-  LifeBuoy,
   Zap,
   Activity,
   Code2,
-  ShieldAlert,
-  GitBranch,
   Bot
 } from 'lucide-react';
 
 export default function Sidebar() {
-  const { activeTab, setActiveTab, customers, analytics } = useDashboard();
+  const { activeTab, setActiveTab, customers, useMockData } = useDashboard();
 
   const highRiskCount = customers.filter(c => c.riskLevel === 'HIGH').length;
   const pendingRecoveryCount = customers.filter(c => c.status === 'Pending Recovery' || c.status === 'Pending').length;
@@ -43,8 +40,8 @@ export default function Sidebar() {
       id: 'live-feed',
       label: 'Live Journey Stream',
       icon: Activity,
-      badge: 'Live',
-      badgeColor: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40'
+      badge: 'Demo',
+      badgeColor: 'bg-slate-700/60 text-slate-300 border-slate-600'
     },
     {
       id: 'api-docs',
@@ -99,25 +96,25 @@ export default function Sidebar() {
           );
         })}
 
-        {/* AI & ML System Status Card */}
+        {/* AI & ML System Status Card — Clearly Indicating Demo Status */}
         <div className="pt-6">
           <div className="p-3.5 rounded-xl bg-slate-900/70 border border-slate-800/90 text-xs">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
-                <Bot className="w-4 h-4 text-indigo-400" />
+                <Bot className="w-4 h-4 text-amber-400" />
                 <span className="font-semibold text-slate-200">Gemini Engine</span>
               </div>
-              <span className="flex h-2 w-2 relative">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              <span className="flex items-center gap-1.5 text-[10px] font-mono text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                {useMockData ? 'Not Connected' : 'FastAPI Ready'}
               </span>
             </div>
             <p className="text-[11px] text-slate-400 leading-relaxed">
-              Friction Analyzer model active with zero-shot journey reasoning.
+              Demo Mode — awaiting Gemini API backend integration.
             </p>
             <div className="mt-2.5 pt-2 border-t border-slate-800 flex items-center justify-between text-[10px] text-slate-500">
-              <span>Avg Latency: 240ms</span>
-              <span className="text-emerald-400 font-mono font-semibold">99.8% Online</span>
+              <span>Source: Mock Schema</span>
+              <span className="text-slate-400 font-mono">Person 3 Pipeline</span>
             </div>
           </div>
         </div>

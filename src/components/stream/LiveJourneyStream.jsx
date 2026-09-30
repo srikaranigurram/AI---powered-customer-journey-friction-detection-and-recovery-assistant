@@ -1,21 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useDashboard } from '../../context/DashboardContext';
-import RiskBadge from '../customers/RiskBadge';
 import {
-  Activity,
   Radio,
   Eye,
-  Columns2,
-  ShoppingCart,
-  CreditCard,
-  AlertTriangle,
-  Zap,
-  ArrowRight
+  Info
 } from 'lucide-react';
 
 export default function LiveJourneyStream() {
-  const { customers, openCustomerDetails } = useDashboard();
-  const [streamEvents, setStreamEvents] = useState([
+  const { openCustomerDetails } = useDashboard();
+  const [streamEvents] = useState([
     {
       id: 'EVT-901',
       time: 'Just now',
@@ -81,20 +74,24 @@ export default function LiveJourneyStream() {
               </span>
             </div>
             <div>
-              <h3 className="text-base font-bold text-white tracking-wide flex items-center gap-2">
-                Real-Time Journey Telemetry Stream
-                <span className="px-2 py-0.5 text-[10px] bg-cyan-500/10 text-cyan-300 border border-cyan-500/30 rounded-full font-mono">
-                  WebSocket: CONNECTED
+              <div className="flex items-center gap-2">
+                <h3 className="text-base font-bold text-white tracking-wide">
+                  Journey Telemetry Stream
+                </h3>
+                {/* Changed from WebSocket: CONNECTED to Simulated Live */}
+                <span className="px-2 py-0.5 text-[10px] bg-amber-500/10 text-amber-300 border border-amber-500/30 rounded-full font-mono font-bold">
+                  Simulated Live
                 </span>
-              </h3>
+              </div>
               <p className="text-xs text-slate-400">
-                Live behavioral event signals streamed from active shopper sessions
+                Simulated behavioral event signals for hackathon demonstration
               </p>
             </div>
           </div>
 
-          <div className="text-xs text-slate-400 font-mono">
-            Event Rate: <span className="text-emerald-400 font-bold">18.4 events/sec</span>
+          <div className="flex items-center gap-2 text-xs text-slate-400 bg-slate-950/60 px-3 py-1.5 rounded-lg border border-slate-800 font-mono">
+            <Info className="w-3.5 h-3.5 text-slate-400" />
+            <span>Event Simulation Rate: <strong className="text-emerald-400">18.4 events/min</strong></span>
           </div>
         </div>
 
@@ -103,7 +100,6 @@ export default function LiveJourneyStream() {
           {streamEvents.map((evt) => {
             const isFriction = evt.type === 'friction';
             const isWarning = evt.type === 'warning';
-            const isSuccess = evt.type === 'success';
 
             return (
               <div
