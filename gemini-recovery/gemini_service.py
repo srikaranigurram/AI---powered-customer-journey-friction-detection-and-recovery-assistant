@@ -12,6 +12,7 @@ recovery actions and personalized communications.
 import os
 import re
 import json
+import time
 import logging
 from pathlib import Path
 from typing import Dict, Any, List, Optional
@@ -56,7 +57,7 @@ SUPPORTED_FRICTION_TYPES = {
 }
 
 # Supported Gemini Flash models
-DEFAULT_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+DEFAULT_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.8-flash")
 
 _CLIENT_INITIALIZED = False
 _CLIENT_INSTANCE: Optional[genai.Client] = None
@@ -287,29 +288,74 @@ def generate_recovery_plan(
     prompt = build_recovery_prompt(ml_result, customer_message)
     model_name = os.getenv("GEMINI_MODEL", DEFAULT_MODEL)
 
-    try:
-        config = types.GenerateContentConfig(
-            response_mime_type="application/json",
-            temperature=0.2,
-        )
+    max_retries = 2
+    retry_delay = 2.0
 
-        response = client.models.generate_content(
-            model=model_name,
-            contents=prompt,
-            config=config,
-        )
+    for attempt in range(max_retries + 1):
+        try:
+            config = types.GenerateContentConfig(
+                response_mime_type="application/json",
+                temperature=0.2,
+            )
 
-        if not response or not response.text:
-            raise ValueError("Gemini returned empty response.")
+            response = client.models.generate_content(
+                model=model_name,
+                contents=prompt,
+                config=config,
+            )
 
-        return clean_and_parse_json(response.text)
+            if not response or not response.text:
+                raise ValueError("Gemini returned empty response.")
 
-    except APIError as api_err:
-        logger.error(f"Gemini API error occurred: {api_err.__class__.__name__}")
-        return get_rule_based_fallback(ml_result, customer_message)
-    except Exception as exc:
-        logger.error(f"Failed to generate recovery with Gemini: {exc.__class__.__name__}")
-        return get_rule_based_fallback(ml_result, customer_message)
+            return clean_and_parse_json(response.text)
+
+        except APIError as api_err:
+            code = getattr(api_err, "code", None) or getattr(getattr(api_err, "response", None), "status_code", "UNKNOWN")
+            status = getattr(api_err, "status", "UNKNOWN")
+            is_transient = (
+                code == 503
+                or str(status).upper() == "UNAVAILABLE"
+                or "503" in str(api_err)
+                or "UNAVAILABLE" in str(api_err).upper()
+            )
+
+            if is_transient and attempt < max_retries:
+                logger.warning(
+                    f"Gemini API temporarily unavailable (503/UNAVAILABLE). "
+                    f"Retrying in {retry_delay}s (attempt {attempt + 1}/{max_retries})..."
+                )
+                time.sleep(retry_delay)
+                continue
+
+            message = getattr(api_err, "message", "")
+            details = getattr(api_err, "details", "")
+
+            err_lines = [
+                f"Gemini API error occurred: {api_err.__class__.__name__}",
+                f"HTTP Status Code: {code}",
+                f"Status: {status}",
+                f"Message: {message}",
+                f"Details: {details}",
+            ]
+            error_output = "\n".join(err_lines)
+
+            api_key = os.getenv("GEMINI_API_KEY", "").strip()
+            if api_key:
+                error_output = error_output.replace(api_key, "[REDACTED_API_KEY]")
+            error_output = re.sub(r"AIza[0-9A-Za-z-_]{35}", "[REDACTED_API_KEY]", error_output)
+
+            logger.error(f"\n{error_output}")
+            return get_rule_based_fallback(ml_result, customer_message)
+        except Exception as exc:
+            err_msg = f"Failed to generate recovery with Gemini: {exc.__class__.__name__}: {exc}"
+            api_key = os.getenv("GEMINI_API_KEY", "").strip()
+            if api_key:
+                err_msg = err_msg.replace(api_key, "[REDACTED_API_KEY]")
+            err_msg = re.sub(r"AIza[0-9A-Za-z-_]{35}", "[REDACTED_API_KEY]", err_msg)
+            logger.error(err_msg)
+            return get_rule_based_fallback(ml_result, customer_message)
+
+    return get_rule_based_fallback(ml_result, customer_message)
 
 
 def analyze_recovery(
